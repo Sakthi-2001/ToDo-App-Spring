@@ -37,7 +37,7 @@ public class TodoController {
         return new ResponseEntity<TodoItem>(todoService.updateItem(Item,id),HttpStatus.OK);
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping("delete/{id}")
     public ResponseEntity<String> deleteItem(@PathVariable("id") long id){
         todoService.deleteItem(id);
         return new ResponseEntity<String>("Item deleted succesfully!!",HttpStatus.OK);
@@ -60,7 +60,14 @@ public class TodoController {
 
     @DeleteMapping("/deleteMultiple")
     public ResponseEntity<List<Long>> deleteMultipleItems(@RequestBody List<Long> items) {
-        List<Long> itemNotFound = todoService.deleteMultipleItems(items);
-        return new ResponseEntity<List<Long>>(todoService.deleteMultipleItems(items),HttpStatus.OK);
+
+        List<Long> notFoundItems = todoService.deleteMultipleItems(items);
+        if(notFoundItems.size()!=0){
+            return new ResponseEntity<List<Long>>(notFoundItems,HttpStatus.valueOf(404));
+        }
+        else{
+            return new ResponseEntity<List<Long>>(notFoundItems,HttpStatus.valueOf(200));
+        }
+
     }
 }

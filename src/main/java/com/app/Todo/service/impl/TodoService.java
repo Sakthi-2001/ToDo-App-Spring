@@ -5,7 +5,9 @@ import com.app.Todo.exception.TypeErrorException;
 import com.app.Todo.model.TodoItem;
 import com.app.Todo.repository.TodoRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,48 +78,39 @@ public class TodoService implements com.app.Todo.service.TodoService {
 
     @Override
     public List<TodoItem> getItemByStatus(String status) {
-        List<TodoItem> requiredItems = new ArrayList<>();
-        List<TodoItem> items = todoRepo.findAll();
-
-        TodoItem.Status enumStatus;
         try {
-            enumStatus = TodoItem.Status.valueOf(status.toUpperCase());
+            TodoItem.Status enumStatus = TodoItem.Status.valueOf(status.toUpperCase());
+            return todoRepo.findByStatus(enumStatus);
         } catch (IllegalArgumentException e) {
             throw new TypeErrorException("TodoItem", "Status", status);
         }
-
-        for(TodoItem item : items){
-            if(item.getStatus().equals(enumStatus)){
-                requiredItems.add(item);
-            }
-        }
-        return requiredItems;
     }
 
     @Override
     public TodoItem getItemByTitle(String title) {
-        List<TodoItem> items = todoRepo.findAll();
-        for(TodoItem item : items){
-            if(item.getTitle().toLowerCase().equals(title.toLowerCase())){
-                return item;
-            }
-        }
-        throw new ResourceNotFoundException("TodoItem","title",title);
+        return todoRepo.findByTitle(title).orElseThrow(()->new ResourceNotFoundException("TodoItem","title",title));
     }
 
     @Override
-    public List<Long> deleteMultipleItems(List<Long> items) {
-        List<Long> itemNotFound = new ArrayList<>();
-        for(Long id:items){
-            if(!todoRepo.findById(id).isPresent()){
-                itemNotFound.add(id);
+    @Transactional
+    public List<Long> deleteMultipleItems(List<Long> ids) {
+            boolean flag = true;
+            List<Long> notFoundItems = new ArrayList<>();
+            for(Long id : ids ){
+                if(!todoRepo.findById(id).isPresent()){
+                    notFoundItems.add(id);
+                    flag=false;
+                }
             }
-            else{
+            if(!flag){
+                return notFoundItems;
+            }
+            for (Long id : ids) {
                 todoRepo.deleteById(id);
             }
-        }
-        return itemNotFound;
+            return notFoundItems;
     }
+
 
     private boolean isValidStatus(String status) {
         for (TodoItem.Status enumStatus : TodoItem.Status.values()) {
