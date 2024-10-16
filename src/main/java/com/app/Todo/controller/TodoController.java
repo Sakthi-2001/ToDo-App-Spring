@@ -1,11 +1,12 @@
 package com.app.Todo.controller;
 
 import com.app.Todo.model.TodoItem;
+import com.app.Todo.producer.RabbitMQProducer;
 import com.app.Todo.service.impl.TodoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +17,9 @@ public class TodoController {
 
     @Autowired
     private TodoService todoService;
+
+    @Autowired
+    private RabbitMQProducer rabbitMQProducer;
 
     @PostMapping()
     public ResponseEntity<TodoItem> addItem(@RequestBody TodoItem item){
@@ -70,4 +74,13 @@ public class TodoController {
         }
 
     }
+
+    @Scheduled(fixedRate = 5000, initialDelay = 10000)
+    public ResponseEntity<String> sendStatusCount(){
+        rabbitMQProducer.sendJsonMessage(todoService.getStatusCount());
+        return new ResponseEntity<String>("Json message sent",HttpStatus.OK);
+    }
+
+
+
 }

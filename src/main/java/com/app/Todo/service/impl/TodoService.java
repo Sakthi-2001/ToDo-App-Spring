@@ -2,10 +2,11 @@ package com.app.Todo.service.impl;
 
 import com.app.Todo.exception.ResourceNotFoundException;
 import com.app.Todo.exception.TypeErrorException;
+import com.app.Todo.model.AggregateStatus;
 import com.app.Todo.model.TodoItem;
+import com.app.Todo.repository.StatusRepo;
 import com.app.Todo.repository.TodoRepo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,10 @@ public class TodoService implements com.app.Todo.service.TodoService {
 
     @Autowired
     private TodoRepo todoRepo;
+
+    @Autowired
+    private StatusRepo statusRepo;
+
 
     @Override
     public TodoItem saveItem(TodoItem item) {
@@ -111,22 +116,31 @@ public class TodoService implements com.app.Todo.service.TodoService {
             return notFoundItems;
     }
 
-
-    private boolean isValidStatus(String status) {
-        for (TodoItem.Status enumStatus : TodoItem.Status.values()) {
-            if (enumStatus.name().equalsIgnoreCase(status)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private boolean isValidEnumStatus(TodoItem.Status status) {
-        for (TodoItem.Status enumStatus : TodoItem.Status.values()) {
-            if (enumStatus == status) {
-                return true;
-            }
+        try {
+            TodoItem.Status.valueOf(status.name());
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
         }
-        return false;
     }
+
+    @Override
+    public List<AggregateStatus> getStatusCount(){
+        return todoRepo.countStatusByType();
+    }
+
+    @Transactional
+    @Override
+    public void saveStatusItems(List<AggregateStatus> statusCount) {
+        for(AggregateStatus item : statusCount ){
+            statusRepo.save(item);
+        }
+        System.out.println("Saved statusCount successfully!!");
+
+    }
+
+
 }
+
+

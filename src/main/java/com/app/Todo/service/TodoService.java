@@ -1,5 +1,6 @@
 package com.app.Todo.service;
 
+import com.app.Todo.model.AggregateStatus;
 import com.app.Todo.model.TodoItem;
 
 import java.util.List;
@@ -14,4 +15,6 @@ public interface TodoService {
     List<TodoItem> getItemByStatus(String status);
     TodoItem getItemByTitle(String title);
     List<Long> deleteMultipleItems(List<Long> items);
+    void saveStatusItems(List<AggregateStatus> statusCount);
+    List<AggregateStatus> getStatusCount();
 }
